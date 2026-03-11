@@ -37,12 +37,46 @@ app.get("/user", async (req, res) => {
 //get all users
 app.get("/feed", async (req, res) => {
   try {
-    const users = await Users.find({});
+    const users = await User.find({});
     if (!users) res.send("No users");
     else res.send(users);
   } catch (error) {
     console.error(error.message);
     res.status(500).send("server error");
+  }
+});
+
+//delete by id
+app.delete("/user/:id", async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const user = await User.findByIdAndDelete(userId);
+
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    res.send("User deleted successfully");
+  } catch (err) {
+    res.status(500).send("Error deleting user");
+  }
+});
+
+//update user by id
+app.patch("/user/:id", async (req, res) => {
+  const userId = req.params.id;
+  const data = req.body;
+
+  try {
+    const user = await User.findByIdAndUpdate(userId, data);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    res.send(user);
+  } catch (err) {
+    res.status(500).send("Error updating user");
   }
 });
 
