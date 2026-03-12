@@ -9,6 +9,9 @@ app.post("/signup", async (req, res) => {
   const user = new User(req.body);
 
   try {
+    if (req.body?.skills?.length > 10)
+      throw new Error("Skills should be less than 11");
+
     await user.save();
     res.send("signup successful");
   } catch (error) {
@@ -63,12 +66,30 @@ app.delete("/user/:id", async (req, res) => {
   }
 });
 
+app.use((req, res, next) => {
+  console.log("METHOD:", req.method);
+  console.log("URL:", req.url);
+  next();
+});
+
 //update user by id
 app.patch("/user/:id", async (req, res) => {
   const userId = req.params.id;
   const data = req.body;
 
   try {
+    const ALLOWED_UPDATES = ["photoUrl", "about", "gender", "skills", "age"];
+
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      ALLOWED_UPDATES.includes(k),
+    );
+    if (!isUpdateAllowed) {
+      throw new Error("Update not allowed");
+    }
+
+    if (data?.skills?.length > 10)
+      throw new Error("Skills should be less than 11");
+
     const user = await User.findByIdAndUpdate(userId, data);
     if (!user) {
       return res.status(404).send("User not found");
@@ -76,7 +97,7 @@ app.patch("/user/:id", async (req, res) => {
 
     res.send(user);
   } catch (err) {
-    res.status(500).send("Error updating user");
+    res.status(500).send("Error updating user. " + err.message);
   }
 });
 
