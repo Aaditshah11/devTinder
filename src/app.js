@@ -4,7 +4,10 @@ const User = require("./models/user");
 const app = express();
 const { validateSignupData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
+app.use(cookieParser());
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
@@ -66,7 +69,26 @@ app.post("/login", async (req, res) => {
       throw new Error("Invalid credentials");
     }
 
+    const token = await jwt.sign({ _id: user._id }, "DEV@tinder123");
+    res.cookie("token", token);
+
     res.send("Login successful");
+  } catch (err) {
+    res.status(401).send("ERROR: " + err.message);
+  }
+});
+
+app.get("/profile", async (req, res) => {
+  try {
+    const cookies = await req.cookies;
+    const { token } = cookies;
+    if (!token) throw new Error("auth failed");
+    const decoded = jwt.verify(token, "DEV@tinder123");
+    const { _id } = decoded;
+
+    const user = await User.findById({ _id });
+    if (!user) throw new Error("no user exists");
+    res.send(user);
   } catch (err) {
     res.status(401).send("ERROR: " + err.message);
   }
