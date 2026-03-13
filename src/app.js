@@ -6,6 +6,7 @@ const { validateSignupData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middleware/auth");
 
 app.use(cookieParser());
 app.use(express.json());
@@ -78,17 +79,19 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const cookies = await req.cookies;
-    const { token } = cookies;
-    if (!token) throw new Error("auth failed");
-    const decoded = jwt.verify(token, "DEV@tinder123");
-    const { _id } = decoded;
-
-    const user = await User.findById({ _id });
-    if (!user) throw new Error("no user exists");
+    const user = req.user;
     res.send(user);
+  } catch (err) {
+    res.status(401).send("ERROR: " + err.message);
+  }
+});
+
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    res.send(user.firstName + " sent a connection request");
   } catch (err) {
     res.status(401).send("ERROR: " + err.message);
   }
