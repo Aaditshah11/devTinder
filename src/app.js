@@ -70,8 +70,12 @@ app.post("/login", async (req, res) => {
       throw new Error("Invalid credentials");
     }
 
-    const token = await jwt.sign({ _id: user._id }, "DEV@tinder123");
-    res.cookie("token", token);
+    const token = await jwt.sign({ _id: user._id }, "DEV@tinder123", {
+      expiresIn: "7d",
+    });
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 8 * 3600000),
+    });
 
     res.send("Login successful");
   } catch (err) {
