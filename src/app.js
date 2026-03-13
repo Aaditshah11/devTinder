@@ -2,20 +2,73 @@ const express = require("express");
 const { connectDB } = require("./config/database");
 const User = require("./models/user");
 const app = express();
+const { validateSignupData } = require("./utils/validation");
+const bcrypt = require("bcrypt");
 
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
-
   try {
-    if (req.body?.skills?.length > 10)
-      throw new Error("Skills should be less than 11");
+    const { firstName, lastName, emailId, password, skills } = req.body;
 
+    // 1️⃣ Validate input
+    validateSignupData(req);
+
+    // 2️⃣ Check duplicate email
+    const existingUser = await User.findOne({ emailId });
+    if (existingUser) {
+      throw new Error("Email already exists");
+    }
+
+    // 3️⃣ Validate skills length
+    if (skills?.length > 10) {
+      throw new Error("Skills should be less than 11");
+    }
+
+    // 4️⃣ Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 5️⃣ Create user
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: hashedPassword,
+      skills,
+    });
+
+    // 6️⃣ Save to database
     await user.save();
-    res.send("signup successful");
+
+    res.send("Signup successful");
   } catch (error) {
-    res.status(400).send("error handling signup" + error.message);
+    res.status(400).send("Error handling signup: " + error.message);
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+
+    if (!emailId || !password) {
+      throw new Error("Invalid credentials");
+    }
+
+    const user = await User.findOne({ emailId });
+
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if (!isValidPassword) {
+      throw new Error("Invalid credentials");
+    }
+
+    res.send("Login successful");
+  } catch (err) {
+    res.status(401).send("ERROR: " + err.message);
   }
 });
 
@@ -64,12 +117,6 @@ app.delete("/user/:id", async (req, res) => {
   } catch (err) {
     res.status(500).send("Error deleting user");
   }
-});
-
-app.use((req, res, next) => {
-  console.log("METHOD:", req.method);
-  console.log("URL:", req.url);
-  next();
 });
 
 //update user by id
