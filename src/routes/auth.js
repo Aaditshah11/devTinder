@@ -10,24 +10,19 @@ authRouter.post("/signup", async (req, res) => {
   try {
     const { firstName, lastName, emailId, password, skills } = req.body;
 
-    // 1️⃣ Validate input
     validateSignupData(req);
 
-    // 2️⃣ Check duplicate email
     const existingUser = await User.findOne({ emailId });
     if (existingUser) {
       throw new Error("Email already exists");
     }
 
-    // 3️⃣ Validate skills length
     if (skills?.length > 10) {
       throw new Error("Skills should be less than 11");
     }
 
-    // 4️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 5️⃣ Create user
     const user = new User({
       firstName,
       lastName,
@@ -36,7 +31,6 @@ authRouter.post("/signup", async (req, res) => {
       skills,
     });
 
-    // 6️⃣ Save to database
     await user.save();
 
     res.send("Signup successful");
