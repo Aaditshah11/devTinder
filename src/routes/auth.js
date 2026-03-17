@@ -44,19 +44,19 @@ authRouter.post("/login", async (req, res) => {
     const { emailId, password } = req.body;
 
     if (!emailId || !password) {
-      throw new Error("Invalid credentials");
+      throw new Error("invalid credentials");
     }
 
     const user = await User.findOne({ emailId });
 
     if (!user) {
-      throw new Error("Invalid credentials");
+      throw new Error("invalid credentials");
     }
 
     const isValidPassword = await user.validatePassword(password);
 
     if (!isValidPassword) {
-      throw new Error("Invalid credentials");
+      throw new Error("invalid credentials");
     }
 
     const token = await user.getJWT();
@@ -65,7 +65,7 @@ authRouter.post("/login", async (req, res) => {
       expires: new Date(Date.now() + 8 * 3600000), //8 hours expiration
     });
 
-    res.send("Login successful");
+    res.send(user);
   } catch (err) {
     res.status(401).send("ERROR: " + err.message);
   }
