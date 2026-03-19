@@ -64,15 +64,15 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
       $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
     });
 
-    const excludedUserIds = existingConnections.map((conn) => {
-      return conn.fromUserId.equals(loggedInUser._id)
-        ? conn.toUserId
-        : conn.fromUserId;
+    const excludedUserIds = new Set();
+    excludedUserIds.add(loggedInUser._id.toString());
+    
+    existingConnections.forEach((conn) => {
+      excludedUserIds.add(conn.fromUserId.toString());
+      excludedUserIds.add(conn.toUserId.toString());
     });
 
-    const allExcludedIds = [...excludedUserIds, loggedInUser._id];
-
-    const feed = await User.find({ _id: { $nin: allExcludedIds } })
+    const feed = await User.find({ _id: { $nin: Array.from(excludedUserIds) } })
       .select(SAFE_FIELDS)
       .skip(skip)
       .limit(limit);
