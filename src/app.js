@@ -5,6 +5,8 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 
+require("dotenv").config();
+
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -27,8 +29,8 @@ app.use("/", userRouter);
 connectDB()
   .then(() => {
     console.log("database connection established");
-    app.listen(3000, () => {
-      console.log("server running on 3000");
+    app.listen(process.env.PORT, () => {
+      console.log("server running");
     });
   })
   .catch((err) => {
