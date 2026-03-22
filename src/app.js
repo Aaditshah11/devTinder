@@ -4,6 +4,7 @@ const app = express();
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
+const http = require("http");
 
 require("dotenv").config();
 
@@ -20,16 +21,20 @@ const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
+const { initializeSocket } = require("./utils/socket");
 
 app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
 
+const server = http.createServer(app);
+initializeSocket(server);
+
 connectDB()
   .then(() => {
     console.log("database connection established");
-    app.listen(process.env.PORT, () => {
+    server.listen(process.env.PORT, () => {
       console.log("server running");
     });
   })
